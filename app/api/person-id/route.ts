@@ -16,7 +16,7 @@ const norm = (s: string) =>
 
 export async function POST(req: Request) {
   const { name, electorate } = (await req.json()) as { name?: string; electorate?: string };
-  if (!name || !electorate) return new Response("name + electorate required", { status: 400 });
+  if (!name || !electorate) return new Response("name and electorate required", { status: 400 });
 
   const people = await tvfy<TVFYPerson[]>("/people.json");
 
