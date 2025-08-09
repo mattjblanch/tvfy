@@ -37,14 +37,16 @@ export async function GET(
   start.setMonth(start.getMonth() - 6); // look back six months for more results
   const toISO = (d: Date) => d.toISOString().slice(0, 10);
 
+  const debug: { request: string; response: unknown }[] = [];
+
   const divisions = await tvfy<DivisionSummary[]>("/divisions.json", {
     start_date: toISO(start),
     end_date: toISO(today),
-  });
+  }, debug);
 
   const results: VoteResult[] = [];
   for (const d of divisions) {
-    const full = await tvfy<DivisionDetail>(`/divisions/${d.id}.json`);
+    const full = await tvfy<DivisionDetail>(`/divisions/${d.id}.json`, {}, debug);
     // Match the vote for the selected MP using the nested `person.id`
     // field. Previously we looked for a non-existent `person_id` field,
     // so no votes were ever found and the UI always displayed "No votes
@@ -63,5 +65,5 @@ export async function GET(
       });
     }
   }
-  return Response.json(results);
+  return Response.json({ votes: results, debug });
 }

@@ -24,12 +24,14 @@ export default function PostcodeTool() {
   const [reps, setReps] = useState<OARepresentative[] | null>(null);
   const [selected, setSelected] = useState<OARepresentative | null>(null);
   const [votes, setVotes] = useState<VoteRow[] | null>(null);
+  const [debug, setDebug] = useState<{ request: string; response: unknown }[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function lookup() {
     setError(null);
     setVotes(null);
+    setDebug(null);
     setSelected(null);
     setReps(null);
     if (!postcode.trim()) return;
@@ -49,6 +51,7 @@ export default function PostcodeTool() {
   async function choose(rep: OARepresentative) {
     setSelected(rep);
     setVotes(null);
+    setDebug(null);
     setError(null);
     setLoading(true);
     try {
@@ -57,8 +60,9 @@ export default function PostcodeTool() {
       // so we request that path directly rather than a non-existent `/votes` subpath.
       const vv = await fetch(`/api/mp/${id}`);
       if (!vv.ok) throw new Error("Could not load votes");
-      const votes = (await vv.json()) as VoteRow[];
-      setVotes(votes);
+      const data = (await vv.json()) as { votes: VoteRow[]; debug: { request: string; response: unknown }[] };
+      setVotes(data.votes);
+      setDebug(data.debug);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
@@ -159,6 +163,18 @@ export default function PostcodeTool() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {debug && (
+            <div className="mt-6 text-xs break-all">
+              <h3 className="font-medium mb-1">TVFY debug</h3>
+              {debug.map((d, i) => (
+                <div key={i} className="mb-4">
+                  <div>Request: {d.request}</div>
+                  <pre className="bg-gray-100 p-2 overflow-auto">{JSON.stringify(d.response, null, 2)}</pre>
+                </div>
+              ))}
             </div>
           )}
         </div>
