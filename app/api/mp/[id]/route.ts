@@ -9,7 +9,13 @@ type DivisionSummary = {
 
 type DivisionDetail = DivisionSummary & {
   summary: string;
-  votes: { person_id: number; vote: string }[];
+  // Each vote entry contains nested person information. The previous
+  // implementation expected a flat `person_id` field which doesn't
+  // exist in the API response, leading to no votes being matched for an
+  // MP and an empty result set. Instead, each vote exposes a `person`
+  // object with an `id` property. Model that structure so we can match
+  // the selected MP correctly.
+  votes: { person: { id: number }; vote: string }[];
 };
 
 type VoteResult = {
@@ -36,8 +42,12 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const results: VoteResult[] = [];
   for (const d of divisions) {
     const full = await tvfy<DivisionDetail>(`/divisions/${d.id}.json`);
+    // Match the vote for the selected MP using the nested `person.id`
+    // field. Previously we looked for a non-existent `person_id` field,
+    // so no votes were ever found and the UI always displayed "No votes
+    // in the recent window." for every MP.
     const vote = Array.isArray(full.votes)
-      ? full.votes.find((v) => String(v.person_id) === String(id))
+      ? full.votes.find((v) => String(v.person?.id) === String(id))
       : undefined;
     if (vote) {
       results.push({
