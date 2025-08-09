@@ -34,7 +34,7 @@ export async function GET(
   const { id } = await params;
   const today = new Date();
   const start = new Date(today);
-  start.setMonth(start.getMonth() - 2); // last ~60 days
+  start.setMonth(start.getMonth() - 6); // look back six months for more results
   const toISO = (d: Date) => d.toISOString().slice(0, 10);
 
   const divisions = await tvfy<DivisionSummary[]>("/divisions.json", {
