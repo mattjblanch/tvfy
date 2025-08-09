@@ -27,8 +27,11 @@ type VoteResult = {
   vote: string;
 };
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const id = params.id;
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
   const today = new Date();
   const start = new Date(today);
   start.setMonth(start.getMonth() - 2); // last ~60 days
