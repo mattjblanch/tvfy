@@ -53,7 +53,9 @@ export default function PostcodeTool() {
     setLoading(true);
     try {
       const id = Number(rep.person_id);
-      const vv = await fetch(`/api/mp/${id}/votes`);
+      // Fetch recent votes for the selected MP. The API route is `/api/mp/[id]`
+      // so we request that path directly rather than a non-existent `/votes` subpath.
+      const vv = await fetch(`/api/mp/${id}`);
       if (!vv.ok) throw new Error("Could not load votes");
       const votes = (await vv.json()) as VoteRow[];
       setVotes(votes);
