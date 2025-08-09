@@ -23,7 +23,6 @@ export default function PostcodeTool() {
   const [postcode, setPostcode] = useState("");
   const [reps, setReps] = useState<OARepresentative[] | null>(null);
   const [selected, setSelected] = useState<OARepresentative | null>(null);
-  const [personId, setPersonId] = useState<number | null>(null);
   const [votes, setVotes] = useState<VoteRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,43 +31,34 @@ export default function PostcodeTool() {
     setError(null);
     setVotes(null);
     setSelected(null);
-    setPersonId(null);
     setReps(null);
     if (!postcode.trim()) return;
     setLoading(true);
-    try {
-      const r = await fetch(`/api/lookup?postcode=${encodeURIComponent(postcode.trim())}`);
-      if (!r.ok) throw new Error(`Lookup failed (${r.status})`);
-      const data = (await r.json()) as OARepresentative[];
-      setReps(data);
-    } catch (e: any) {
-      setError(e.message ?? "Lookup failed");
-    } finally {
-      setLoading(false);
+      try {
+        const r = await fetch(`/api/lookup?postcode=${encodeURIComponent(postcode.trim())}`);
+        if (!r.ok) throw new Error(`Lookup failed (${r.status})`);
+        const data = (await r.json()) as OARepresentative[];
+        setReps(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Lookup failed");
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
   async function choose(rep: OARepresentative) {
     setSelected(rep);
     setVotes(null);
-    setPersonId(null);
     setError(null);
     setLoading(true);
     try {
-      const r = await fetch(`/api/person-id`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: rep.name, electorate: rep.constituency }),
-      });
-      if (!r.ok) throw new Error("Could not map to TVFY person id");
-      const { id } = await r.json();
-      setPersonId(id);
+      const id = Number(rep.person_id);
       const vv = await fetch(`/api/mp/${id}/votes`);
       if (!vv.ok) throw new Error("Could not load votes");
       const votes = (await vv.json()) as VoteRow[];
       setVotes(votes);
-    } catch (e: any) {
-      setError(e.message ?? "Something went wrong");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
